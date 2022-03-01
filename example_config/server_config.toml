@@ -1,0 +1,21 @@
+#以下是服务启动配置
+[server]
+#服务名称
+service_name="raptor-demo"
+http_port="0.0.0.0:1234"
+
+[log]
+  dir="./log"
+  log_level="DEBUG"
+  prefix="raptor"
+  auto_clear_hours=24
+  log_type="default"
+  depth=1
+  format="json" 
+
+#通过配置中心加载配置文件
+[config_center]
+# file_path,etcd_addr,apollo_addr 三个配置一个即可
+file_path = "./example_config/config.toml"
+#etcd_addr = ["xxx.xxx.xxx.xxx:xxx","xxx.xxx.xxx.xxx:xxx","xxx.xxx.xxx.xxx:xxx"]
+#apollo_addr = "xxx.xxx.xxx.xxx:xxx"
