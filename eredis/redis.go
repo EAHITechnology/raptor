@@ -45,10 +45,10 @@ type RedisClients struct {
 
 func checkConfig(r *RedisInfo) error {
 	if r.RedisName == "" {
-		return REDIS_NOT_CONFIGURED_ERR
+		return ErrRedisNotConfigured
 	}
 	if r.Addr == "" {
-		return REDIS_ADDR_NOT_CONFIGURED_ERR
+		return ErrRedisAddrNotConfigured
 	}
 	if r.MaxIdle == 0 {
 		r.MaxIdle = MAX_IDLE
@@ -112,7 +112,7 @@ func loadRedis(ctx context.Context, i RedisInfo) error {
 
 func InitRedis(ctx context.Context, redisInfos []RedisInfo, rdc RedisDynamicConfiguration, logger RedisLog) error {
 	if utils.IsNil(logger) || logger == nil {
-		return REDIS_LOG_NOT_INIT_ERR
+		return ErrRedisLogNotInit
 	}
 
 	redisclients = &RedisClients{
@@ -164,7 +164,7 @@ func (r *Redis) Del(args ...interface{}) (count int64, err error) {
 	}
 
 	if reply == nil {
-		return 0, ErrNil
+		return 0, ErrRespNil
 	}
 
 	return reply.(int64), nil
@@ -201,7 +201,7 @@ func (r *Redis) Set(key string, value interface{}) error {
 	}
 
 	if reply == nil {
-		return ErrNil
+		return ErrRespNil
 	}
 
 	if _, err := redis.String(reply, err); err != nil {
@@ -246,7 +246,7 @@ func (r *Redis) Unlock(key string, version int64) (ok bool, err error) {
 	re, err := redis.Int(resp, err)
 	if err != nil {
 		if errors.Is(err, redis.ErrNil) {
-			return false, ErrNil
+			return false, ErrRespNil
 		}
 	}
 
@@ -269,7 +269,7 @@ func (r *Redis) GetString(key string) (string, error) {
 	}
 
 	if reply == nil {
-		return "", ErrNil
+		return "", ErrRespNil
 	}
 
 	return redis.String(reply, err)
@@ -288,7 +288,7 @@ func (r *Redis) GetInt64(key string) (int64, error) {
 	}
 
 	if reply == nil {
-		return 0, ErrNil
+		return 0, ErrRespNil
 	}
 
 	return redis.Int64(reply, err)
@@ -307,7 +307,7 @@ func (r *Redis) GetStringMap(key string) (map[string]string, error) {
 	}
 
 	if reply == nil {
-		return nil, ErrNil
+		return nil, ErrRespNil
 	}
 
 	return redis.StringMap(reply, err)
@@ -343,7 +343,7 @@ func GetClient(redisName string) (*Redis, error) {
 
 	r, ok := redisclients.Rs[redisName]
 	if !ok {
-		return nil, REDIS_NOT_INIT_ERR
+		return nil, ErrRedisNotInit
 	}
 	return r, nil
 }
