@@ -2,6 +2,8 @@ package eredis
 
 import (
 	"context"
+	"errors"
+	"strconv"
 	"sync"
 	"time"
 
@@ -207,6 +209,51 @@ func (r *Redis) Set(key string, value interface{}) error {
 	}
 
 	return nil
+}
+
+func (r *Redis) Lock(key string, expired int64) (version int64, ok bool, err error) {
+	con := r.pool.Get()
+	if err := con.Err(); err != nil {
+		return 0, false, err
+	}
+	defer con.Close()
+
+	version = time.Now().Unix() + expired
+	resp, err := con.Do("SET", key, version, "EX", expired, "NX")
+	if err != nil {
+		return version, false, err
+	}
+
+	if resp == nil {
+		return version, false, nil
+	}
+
+	flag, _ := redis.String(resp, err)
+	if flag != "OK" {
+		return version, false, nil
+	}
+
+	return version, true, nil
+}
+
+func (r *Redis) Unlock(key string, version int64) (ok bool, err error) {
+	versionStr := strconv.FormatInt(version, 10)
+	resp, err := r.Script(1, UnlockLua, []string{key, versionStr})
+	if err != nil {
+		return false, err
+	}
+
+	re, err := redis.Int(resp, err)
+	if err != nil {
+		if errors.Is(err, redis.ErrNil) {
+			return false, ErrNil
+		}
+	}
+
+	if re == 0 {
+		return false, nil
+	}
+	return true, nil
 }
 
 func (r *Redis) GetString(key string) (string, error) {
