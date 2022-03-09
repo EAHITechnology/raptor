@@ -78,7 +78,7 @@ type RpcNetConfigInfo struct {
 	Addr []string `toml:"addr"`
 
 	// Load balancing type
-	// eg: consistency_hash, hash, range
+	// eg: consistency_hash, p2c, random, range
 	Balancetype string `toml:"balancetype"`
 
 	// rpc dial time out

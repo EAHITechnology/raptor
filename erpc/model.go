@@ -17,7 +17,7 @@ type RpcNetConfigInfo struct {
 	Addr []string
 
 	// Load balancing type
-	// eg: consistency_hash, hash, range
+	// eg: consistency_hash, p2c, random, range
 	Balancetype string
 
 	// rpc dial time out
@@ -33,7 +33,11 @@ type RpcNetConfigInfo struct {
 	MaxSize int
 
 	// max free conn
-	MaxIdleConn int
+	MaxIdleConns int
+
+	ReadBufferSize int
+
+	WriteBufferSize int
 
 	// fuse flag
 	BreakFlag bool
