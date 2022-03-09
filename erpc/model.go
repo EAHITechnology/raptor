@@ -8,13 +8,15 @@ type RpcNetConfigInfo struct {
 	// Protocol type, HTTP, HTTPS and grpc are currently supported.
 	Proto string
 
-	// Service discovery type，eg: disf,list.
+	// Service discovery type，eg: etcd, zk, apollo, list.
 	// If we choose list，We will get the remote call service address from the "Addr" configuration.
 	EndpointsFrom string
 
 	// Address list. See "endpointsfrom" for details.
 	// The "Addr" can also be competent for the task of service discovery.
 	Addr []string
+
+	Wight []int
 
 	// Load balancing type
 	// eg: consistency_hash, p2c, random, range
@@ -40,5 +42,5 @@ type RpcNetConfigInfo struct {
 	WriteBufferSize int
 
 	// fuse flag
-	BreakFlag bool
+	//BreakFlag bool
 }

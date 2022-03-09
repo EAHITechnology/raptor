@@ -6,7 +6,7 @@ import (
 )
 
 /*
-直接拼接字符串,如果缓冲变得太大，Write会采用错误值ErrTooLarge引发panic
+直接拼接字符串,如果缓冲变得太大，Write会采用错误值 ErrTooLarge 引发panic
 */
 func Write(strs ...string) (string, error) {
 	defer func() {

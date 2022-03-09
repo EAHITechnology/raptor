@@ -7,10 +7,12 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
 	"github.com/EAHITechnology/raptor/erpc/balancer"
+	"github.com/EAHITechnology/raptor/utils"
 )
 
 type HttpMethod string
@@ -95,8 +97,8 @@ func NewHttpClient(conf *HttpClientConfig) (*HttpClient, error) {
 
 	balancerConfig := balancer.NewBalancerConfig()
 	balancerConfig.SetBalancerTyp(balancetype)
-	for _, addr := range conf.baseConfig.Addr {
-		balancerConfig.SetItem(balancer.NewBalancerItem(addr, 1))
+	for idx, addr := range conf.baseConfig.Addr {
+		balancerConfig.SetItem(balancer.NewBalancerItem(addr, conf.baseConfig.Wight[idx]))
 	}
 
 	balancer, err := balancer.NewBalancer((*balancerConfig))
@@ -109,16 +111,21 @@ func NewHttpClient(conf *HttpClientConfig) (*HttpClient, error) {
 	return h, nil
 }
 
-func (h *HttpClient) Send(method HttpMethod, query string, header map[string]string, body io.Reader) (interface{}, error) {
+func (h *HttpClient) Send(method HttpMethod, key []byte, query url.Values, header map[string]string, body io.Reader) (interface{}, error) {
 	h.lock.RLock()
 	defer h.lock.RUnlock()
 
-	hostInfo, err := h.b.Pick()
+	hostInfo, err := h.b.Pick(key)
 	if err != nil {
 		return nil, err
 	}
 
-	request, err := http.NewRequest(method.getMethod(), hostInfo.GetAddr(), body)
+	url, err := utils.Write(hostInfo.GetAddr(), "?", query.Encode())
+	if err != nil {
+		return nil, err
+	}
+
+	request, err := http.NewRequest(method.getMethod(), url, body)
 	if err != nil {
 		return nil, err
 	}
@@ -186,4 +193,14 @@ func (hm *HttpClientManager) GetClient(serviceName string) (*HttpClient, error) 
 	}
 
 	return client, nil
+}
+
+func NewSingleHttpClientManager(conf *HttpClientConfig) error {
+	manager := NewHttpClientManager()
+	if err := manager.NewHttpClient(conf); err != nil {
+		return err
+	}
+
+	HttpManager = manager
+	return nil
 }

@@ -31,8 +31,13 @@ type HostInfo interface {
 
 type Balancer interface {
 	// Pick well get a HostInfo interface.
-	// Then HostInfo contains link information.
-	Pick() (HostInfo, error)
+	// The HostInfo contains link information.
+	// param `key` valid for `consistency_hash`
+	Pick(key []byte) (HostInfo, error)
+
+	Add(conf ...balancerItem) error
+
+	Remove(addr string) error
 }
 
 /*
@@ -65,7 +70,7 @@ func NewBalancer(conf balancerConfig) (Balancer, error) {
 	case P2cType:
 		return nil, nil
 	case ConsistencyHashType:
-		return nil, nil
+		return NewConsistencyHashBalancer(conf)
 	case RangeType:
 		return nil, nil
 	default:

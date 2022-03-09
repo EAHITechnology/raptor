@@ -2,6 +2,8 @@ package erpc
 
 import "context"
 
+var HttpManager *HttpClientManager
+
 type RpcClient interface {
 }
 
