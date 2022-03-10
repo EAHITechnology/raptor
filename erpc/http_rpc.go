@@ -120,7 +120,7 @@ func NewHttpClient(conf *HttpClientConfig) (*HttpClient, error) {
 	return h, nil
 }
 
-func (h *HttpClient) Send(ctx context.Context, method HttpMethod, key []byte, uri string, query url.Values, header map[string]string, body io.Reader) (interface{}, error) {
+func (h *HttpClient) Send(ctx context.Context, method HttpMethod, key []byte, uri string, query url.Values, header map[string]string, body io.Reader) ([]byte, error) {
 	h.lock.RLock()
 	defer h.lock.RUnlock()
 
