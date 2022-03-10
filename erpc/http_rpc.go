@@ -82,7 +82,7 @@ func NewHttpClient(conf *HttpClientConfig) (*HttpClient, error) {
 
 	// http client
 	h.client = &http.Client{
-		Timeout: time.Second * time.Duration(conf.BaseConfig.TimeOut),
+		Timeout: time.Millisecond * time.Duration(conf.BaseConfig.TimeOut),
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{

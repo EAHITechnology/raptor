@@ -84,30 +84,30 @@ type RpcNetConfigInfo struct {
 	// eg: consistency_hash, p2c, random, range.
 	Balancetype string `toml:"balancetype"`
 
-	// rpc dial time out
+	// rpc dial time out.(Millisecond default 0.)
 	DialTimeout int `toml:"dial_timeout"`
 
-	// rpc total time out
+	// rpc total time out.(Millisecond default 0.)
 	TimeOut int `toml:"timeout"`
 
-	// back off retry times
+	// back off retry times.
 	RetryTimes int `toml:"retry_times"`
 
-	// every addr max conns num
+	// every addr max conns num.
 	MaxConnsPerAddr int `toml:"max_conns_per_addr"`
 
-	// every addr max idle conns num
+	// every addr max idle conns num.
 	MaxIdleConnsPerAddr int `toml:"max_idleconns_per_addr"`
 
-	// all addr max idle conns num
+	// all addr max idle conns num.
 	MaxIdleConns int `toml:"max_idleconns"`
 
-	// idle timeout
+	// idle timeout. (second default 10.)
 	IdleConnTimeout int `toml:"idleconn_timeout"`
 
-	// ReadBufferSize
+	// ReadBufferSize (bytes).
 	ReadBufferSize int `toml:"readbuffer_size"`
 
-	// WriteBufferSize
+	// WriteBufferSize (bytes).
 	WriteBufferSize int `toml:"writebuffer_size"`
 }
