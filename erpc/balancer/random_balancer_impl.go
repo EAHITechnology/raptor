@@ -9,6 +9,10 @@ import (
 	"github.com/EAHITechnology/raptor/utils/rand2"
 )
 
+const (
+	RANDOM_WAIT_SORT = -1
+)
+
 type randomHostInfo struct {
 	addr  string
 	wight int
@@ -99,6 +103,7 @@ func (r *randomBalancer) Add(conf ...balancerItem) error {
 			addr:  val.addr,
 			wight: val.wight,
 		})
+		r.addrMap[val.addr] = RANDOM_WAIT_SORT
 	}
 
 	r.geometricProbabilityList, r.addrMap = getGplist(r.conf.balancerConfigs)

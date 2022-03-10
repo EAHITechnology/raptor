@@ -63,13 +63,13 @@ type RedisConfigInfo struct {
 // remote call
 type RpcNetConfigInfo struct {
 
-	// Service Discovery Name, compatible dirpc.
+	// Service Discovery Name.
 	ServiceName string `toml:"service_name"`
 
 	// Protocol type, HTTP, HTTPS and grpc are currently supported.
 	Proto string `toml:"proto"`
 
-	// Service discovery type，eg: disf,list.
+	// Service discovery type，eg: etcd, zk, apollo, list.
 	// If we choose list，We will get the remote call service address from the "Addr" configuration.
 	EndpointsFrom string `toml:"endpoints_from"`
 
@@ -77,25 +77,37 @@ type RpcNetConfigInfo struct {
 	// The "Addr" can also be competent for the task of service discovery.
 	Addr []string `toml:"addr"`
 
-	// Load balancing type
-	// eg: consistency_hash, p2c, random, range
+	// Weights
+	Wight []int `toml:"wight"`
+
+	// Load balancing type.
+	// eg: consistency_hash, p2c, random, range.
 	Balancetype string `toml:"balancetype"`
 
 	// rpc dial time out
 	DialTimeout int `toml:"dial_timeout"`
 
-	// rpc read time out
-	ReadTimeout int `toml:"read_timeout"`
+	// rpc total time out
+	TimeOut int `toml:"timeout"`
 
 	// back off retry times
 	RetryTimes int `toml:"retry_times"`
 
-	// rpc
-	MaxSize int `toml:"max_size"`
+	// every addr max conns num
+	MaxConnsPerAddr int `toml:"max_conns_per_addr"`
 
-	// max free conn
-	MaxIdleConn int `toml:"max_idle_conn"`
+	// every addr max idle conns num
+	MaxIdleConnsPerAddr int `toml:"max_idleconns_per_addr"`
 
-	// fuse flag
-	BreakFlag bool `toml:"break_flag"`
+	// all addr max idle conns num
+	MaxIdleConns int `toml:"max_idleconns"`
+
+	// idle timeout
+	IdleConnTimeout int `toml:"Iileconn_timeout"`
+
+	// ReadBufferSize
+	ReadBufferSize int `toml:"readbuffer_size"`
+
+	// WriteBufferSize
+	WriteBufferSize int `toml:"writebuffer_size"`
 }

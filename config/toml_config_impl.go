@@ -112,7 +112,7 @@ func (t *TomlConfigManager) InitConfig(ctx context.Context) error {
 		elog.Elog.Infof("InitConfig NewMysql success")
 	}
 
-	//init redis/pika client
+	//init redis/codis client
 	if t.tomlConfig.RedisConfigs != nil || len(t.tomlConfig.RedisConfigs) != 0 {
 		if err := eredis.InitRedis(ctx, t.tomlConfig.mixRedis(), nil, elog.Elog); err != nil {
 			panic("InitConfig InitRedis error: " + err.Error())
@@ -120,12 +120,26 @@ func (t *TomlConfigManager) InitConfig(ctx context.Context) error {
 		elog.Elog.Infof("InitConfig InitRedis success")
 	}
 
-	// mq
-
 	// call
+	// I haven't figured out how to abstract the remote call module in this area.
 	if t.tomlConfig.RpcNetConfigs != nil || len(t.tomlConfig.RpcNetConfigs) != 0 {
-		t.tomlConfig.mixRpcCall()
+		rpcConfigs := t.tomlConfig.mixRpcCall()
+
+		httpConfig := []*erpc.HttpClientConfig{}
+		for _, rpcConfig := range rpcConfigs {
+			if rpcConfig.Proto == "http" || rpcConfig.Proto == "https" {
+				httpConfig = append(httpConfig, &erpc.HttpClientConfig{
+					BaseConfig: *rpcConfig,
+				})
+			}
+		}
+
+		if err := erpc.NewSingleHttpClientManager(httpConfig); err != nil {
+			return err
+		}
 	}
+
+	// mq
 
 	// etc
 	return nil
@@ -150,13 +164,13 @@ func logLevelCheckAndConvert(logLevel string) (elog.LogLevel, error) {
 	case "WARNING":
 		elogLevel = elog.WARNING
 	default:
-		return nil, ErrLogLevel
+		return -1, ErrLogLevel
 	}
 	return elogLevel, nil
 }
 
-func logFormatCheckAndConvert(logFormat string) (elog.Format, error) {
-	var elogFormat elog.Format
+func logFormatCheckAndConvert(logFormat string) (elog.LogFormat, error) {
+	var elogFormat elog.LogFormat
 	switch logFormat {
 	case "json":
 		elogFormat = elog.FORMAT_JSON
@@ -305,21 +319,25 @@ func (t *TomlConfig) mixRedis() []eredis.RedisInfo {
 	return redisInfos
 }
 
-func (t *TomlConfig) mixRpcCall() []erpc.RpcNetConfigInfo {
-	rpcNetConfigs := []erpc.RpcNetConfigInfo{}
+func (t *TomlConfig) mixRpcCall() []*erpc.RpcNetConfigInfo {
+	rpcNetConfigs := []*erpc.RpcNetConfigInfo{}
 	for _, r := range t.RpcNetConfigs {
-		rpcNetConfig := erpc.RpcNetConfigInfo{
-			ServiceName:   r.ServiceName,
-			Proto:         r.Proto,
-			EndpointsFrom: r.EndpointsFrom,
-			Balancetype:   r.Balancetype,
-			Addr:          r.Addr,
-			DialTimeout:   r.DialTimeout,
-			MaxSize:       r.MaxSize,
-			ReadTimeout:   r.ReadTimeout,
-			RetryTimes:    r.RetryTimes,
-			MaxIdleConn:   r.MaxIdleConn,
-			BreakFlag:     r.BreakFlag,
+		rpcNetConfig := &erpc.RpcNetConfigInfo{
+			ServiceName:         r.ServiceName,
+			Proto:               r.Proto,
+			EndpointsFrom:       r.EndpointsFrom,
+			Addr:                r.Addr,
+			Wight:               r.Wight,
+			Balancetype:         r.Balancetype,
+			DialTimeout:         r.DialTimeout,
+			TimeOut:             r.TimeOut,
+			RetryTimes:          r.RetryTimes,
+			MaxConnsPerAddr:     r.MaxConnsPerAddr,
+			MaxIdleConnsPerAddr: r.MaxIdleConnsPerAddr,
+			MaxIdleConns:        r.MaxIdleConns,
+			IdleConnTimeout:     r.IdleConnTimeout,
+			ReadBufferSize:      r.ReadBufferSize,
+			WriteBufferSize:     r.WriteBufferSize,
 		}
 		rpcNetConfigs = append(rpcNetConfigs, rpcNetConfig)
 	}

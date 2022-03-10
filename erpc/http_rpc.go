@@ -13,7 +13,10 @@ import (
 
 	"github.com/EAHITechnology/raptor/erpc/balancer"
 	"github.com/EAHITechnology/raptor/utils"
+	"golang.org/x/net/context"
 )
+
+var HttpManager *HttpClientManager
 
 type HttpMethod string
 
@@ -30,12 +33,9 @@ func (h *HttpMethod) getMethod() string {
 }
 
 type HttpClientConfig struct {
-	TimeOut             time.Duration
-	IdleConnTimeout     time.Duration
-	KeepAlive           time.Duration
-	MaxIdleConnsPerHost int
-	MaxConnsPerHost     int
-	baseConfig          RpcNetConfigInfo
+	// fuse flag todo
+	// breakFlag bool
+	BaseConfig RpcNetConfigInfo
 }
 
 type HttpClient struct {
@@ -73,32 +73,32 @@ func NewHttpClient(conf *HttpClientConfig) (*HttpClient, error) {
 
 	// http client
 	h.client = &http.Client{
-		Timeout: conf.TimeOut,
+		Timeout: time.Duration(conf.BaseConfig.TimeOut),
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{
-				Timeout: time.Duration(conf.baseConfig.DialTimeout),
+				Timeout: time.Duration(conf.BaseConfig.DialTimeout),
 			}).DialContext,
-			MaxIdleConns:        conf.baseConfig.MaxIdleConns,
-			MaxConnsPerHost:     conf.MaxConnsPerHost,
-			MaxIdleConnsPerHost: conf.MaxIdleConnsPerHost,
-			IdleConnTimeout:     conf.IdleConnTimeout,
-			TLSHandshakeTimeout: 10 * time.Second,
-			ReadBufferSize:      conf.baseConfig.ReadBufferSize,
-			WriteBufferSize:     conf.baseConfig.WriteBufferSize,
+			MaxIdleConns:        conf.BaseConfig.MaxIdleConns,
+			MaxConnsPerHost:     conf.BaseConfig.MaxConnsPerAddr,
+			MaxIdleConnsPerHost: conf.BaseConfig.MaxIdleConnsPerAddr,
+			IdleConnTimeout:     time.Duration(conf.BaseConfig.IdleConnTimeout),
+			TLSHandshakeTimeout: 5 * time.Second,
+			ReadBufferSize:      conf.BaseConfig.ReadBufferSize,
+			WriteBufferSize:     conf.BaseConfig.WriteBufferSize,
 		},
 	}
 
 	// balancer
-	balancetype, err := getBalancerTyp(conf.baseConfig.Balancetype)
+	balancetype, err := getBalancerTyp(conf.BaseConfig.Balancetype)
 	if err != nil {
 		return nil, err
 	}
 
 	balancerConfig := balancer.NewBalancerConfig()
 	balancerConfig.SetBalancerTyp(balancetype)
-	for idx, addr := range conf.baseConfig.Addr {
-		balancerConfig.SetItem(balancer.NewBalancerItem(addr, conf.baseConfig.Wight[idx]))
+	for idx, addr := range conf.BaseConfig.Addr {
+		balancerConfig.SetItem(balancer.NewBalancerItem(addr, conf.BaseConfig.Wight[idx]))
 	}
 
 	balancer, err := balancer.NewBalancer((*balancerConfig))
@@ -111,7 +111,7 @@ func NewHttpClient(conf *HttpClientConfig) (*HttpClient, error) {
 	return h, nil
 }
 
-func (h *HttpClient) Send(method HttpMethod, key []byte, query url.Values, header map[string]string, body io.Reader) (interface{}, error) {
+func (h *HttpClient) Send(ctx context.Context, method HttpMethod, key []byte, query url.Values, header map[string]string, body io.Reader) (interface{}, error) {
 	h.lock.RLock()
 	defer h.lock.RUnlock()
 
@@ -125,7 +125,7 @@ func (h *HttpClient) Send(method HttpMethod, key []byte, query url.Values, heade
 		return nil, err
 	}
 
-	request, err := http.NewRequest(method.getMethod(), url, body)
+	request, err := http.NewRequestWithContext(ctx, method.getMethod(), url, body)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +169,7 @@ func (hm *HttpClientManager) NewHttpClient(conf *HttpClientConfig) error {
 	hm.lock.Lock()
 	defer hm.lock.Unlock()
 
-	if _, ok := hm.manager[conf.baseConfig.ServiceName]; ok {
+	if _, ok := hm.manager[conf.BaseConfig.ServiceName]; ok {
 		return errors.New("service already exists")
 	}
 
@@ -178,7 +178,7 @@ func (hm *HttpClientManager) NewHttpClient(conf *HttpClientConfig) error {
 		return err
 	}
 
-	hm.manager[conf.baseConfig.ServiceName] = client
+	hm.manager[conf.BaseConfig.ServiceName] = client
 
 	return nil
 }
@@ -195,12 +195,13 @@ func (hm *HttpClientManager) GetClient(serviceName string) (*HttpClient, error) 
 	return client, nil
 }
 
-func NewSingleHttpClientManager(conf *HttpClientConfig) error {
+func NewSingleHttpClientManager(conf []*HttpClientConfig) error {
 	manager := NewHttpClientManager()
-	if err := manager.NewHttpClient(conf); err != nil {
-		return err
+	for _, val := range conf {
+		if err := manager.NewHttpClient(val); err != nil {
+			return err
+		}
 	}
-
 	HttpManager = manager
 	return nil
 }

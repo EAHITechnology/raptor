@@ -16,31 +16,37 @@ type RpcNetConfigInfo struct {
 	// The "Addr" can also be competent for the task of service discovery.
 	Addr []string
 
+	// Weights
 	Wight []int
 
-	// Load balancing type
-	// eg: consistency_hash, p2c, random, range
+	// Load balancing type.
+	// eg: consistency_hash, p2c, random, range.
 	Balancetype string
 
 	// rpc dial time out
 	DialTimeout int
 
-	// rpc read time out
-	ReadTimeout int
+	// rpc total time out
+	TimeOut int
 
 	// back off retry times
 	RetryTimes int
 
-	// rpc
-	MaxSize int
+	// every addr max conns num
+	MaxConnsPerAddr int
 
-	// max free conn
+	// every addr max idle conns num
+	MaxIdleConnsPerAddr int
+
+	// all addr max idle conns num
 	MaxIdleConns int
 
+	// idle timeout
+	IdleConnTimeout int
+
+	// ReadBufferSize
 	ReadBufferSize int
 
+	// WriteBufferSize
 	WriteBufferSize int
-
-	// fuse flag
-	//BreakFlag bool
 }

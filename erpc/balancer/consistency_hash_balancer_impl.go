@@ -11,6 +11,8 @@ import (
 
 const (
 	MAX_HSAHNODE_NUM = 1024
+
+	CONSISTENCY_HASH_WAIT_SORT = -1
 )
 
 type consistencyHashHostInfo struct {
@@ -51,11 +53,26 @@ type consistencyHashBalancer struct {
 	conf     balancerConfig
 	hashRing []consistencyHashHostInfo
 	lock     sync.RWMutex
+	addrMap  map[string]int
+}
+
+func getHashRing(items []balancerItem) ([]consistencyHashHostInfo, map[string]int) {
+	ring, addrMap := []consistencyHashHostInfo{}, make(map[string]int)
+
+	for idx, item := range items {
+		hostinfo := consistencyHashHostInfo{
+			addr:      item.addr,
+			wight:     item.wight,
+			hashValue: utils.MurmurHash64A([]byte(item.addr)),
+		}
+		ring = append(ring, hostinfo)
+		addrMap[item.addr] = idx
+	}
+	sort.Sort(consistencyHashHostInfoList(ring))
+	return ring, addrMap
 }
 
 func NewConsistencyHashBalancer(conf balancerConfig) (Balancer, error) {
-	ring := []consistencyHashHostInfo{}
-
 	if len(conf.balancerConfigs) == 0 {
 		return nil, errors.New("addr nil")
 	}
@@ -64,21 +81,12 @@ func NewConsistencyHashBalancer(conf balancerConfig) (Balancer, error) {
 		return nil, errors.New("addr nil")
 	}
 
-	for _, val := range conf.balancerConfigs {
-		hostinfo := consistencyHashHostInfo{
-			addr:      val.addr,
-			wight:     val.wight,
-			hashValue: utils.MurmurHash64A([]byte(val.addr)),
-		}
-
-		ring = append(ring, hostinfo)
-	}
-
-	sort.Sort(consistencyHashHostInfoList(ring))
+	ring, addrMap := getHashRing(conf.balancerConfigs)
 
 	return &consistencyHashBalancer{
 		conf:     conf,
 		hashRing: ring,
+		addrMap:  addrMap,
 	}, nil
 }
 
@@ -104,9 +112,40 @@ func (c *consistencyHashBalancer) Pick(key []byte) (HostInfo, error) {
 }
 
 func (c *consistencyHashBalancer) Add(conf ...balancerItem) error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	for _, val := range conf {
+		if _, ok := c.addrMap[val.addr]; ok {
+			continue
+		}
+
+		c.conf.balancerConfigs = append(c.conf.balancerConfigs, val)
+		c.addrMap[val.addr] = CONSISTENCY_HASH_WAIT_SORT
+	}
+
+	c.hashRing, c.addrMap = getHashRing(c.conf.balancerConfigs)
 	return nil
 }
 
 func (c *consistencyHashBalancer) Remove(addr string) error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	_, ok := c.addrMap[addr]
+	if !ok {
+		return errors.New("addr none")
+	}
+
+	tmpFront := c.conf.balancerConfigs[:c.addrMap[addr]]
+	tmpBackend := []balancerItem{}
+	if c.addrMap[addr] < len(c.conf.balancerConfigs)-1 {
+		tmpBackend = c.conf.balancerConfigs[c.addrMap[addr]+1:]
+	}
+	c.conf.balancerConfigs = []balancerItem{}
+	c.conf.balancerConfigs = append(c.conf.balancerConfigs, tmpFront...)
+	c.conf.balancerConfigs = append(c.conf.balancerConfigs, tmpBackend...)
+
+	c.hashRing, c.addrMap = getHashRing(c.conf.balancerConfigs)
 	return nil
 }
