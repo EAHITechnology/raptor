@@ -28,6 +28,10 @@ const (
 	HEAD   HttpMethod = "HEAD"
 )
 
+const (
+	DefaultHttpIdleTimeout = 10
+)
+
 func (h *HttpMethod) getMethod() string {
 	return string(*h)
 }
@@ -69,20 +73,25 @@ func getBalancerTyp(typ string) (balancer.BalancerTyp, error) {
 
 func NewHttpClient(conf *HttpClientConfig) (*HttpClient, error) {
 	h := &HttpClient{}
+
+	if conf.BaseConfig.IdleConnTimeout < DefaultHttpIdleTimeout {
+		conf.BaseConfig.IdleConnTimeout = DefaultHttpIdleTimeout
+	}
+
 	h.conf = conf
 
 	// http client
 	h.client = &http.Client{
-		Timeout: time.Duration(conf.BaseConfig.TimeOut),
+		Timeout: time.Second * time.Duration(conf.BaseConfig.TimeOut),
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{
-				Timeout: time.Duration(conf.BaseConfig.DialTimeout),
+				Timeout: time.Millisecond * time.Duration(conf.BaseConfig.DialTimeout),
 			}).DialContext,
 			MaxIdleConns:        conf.BaseConfig.MaxIdleConns,
 			MaxConnsPerHost:     conf.BaseConfig.MaxConnsPerAddr,
 			MaxIdleConnsPerHost: conf.BaseConfig.MaxIdleConnsPerAddr,
-			IdleConnTimeout:     time.Duration(conf.BaseConfig.IdleConnTimeout),
+			IdleConnTimeout:     time.Second * time.Duration(conf.BaseConfig.IdleConnTimeout),
 			TLSHandshakeTimeout: 5 * time.Second,
 			ReadBufferSize:      conf.BaseConfig.ReadBufferSize,
 			WriteBufferSize:     conf.BaseConfig.WriteBufferSize,

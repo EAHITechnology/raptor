@@ -103,7 +103,7 @@ type RpcNetConfigInfo struct {
 	MaxIdleConns int `toml:"max_idleconns"`
 
 	// idle timeout
-	IdleConnTimeout int `toml:"Iileconn_timeout"`
+	IdleConnTimeout int `toml:"idleconn_timeout"`
 
 	// ReadBufferSize
 	ReadBufferSize int `toml:"readbuffer_size"`
