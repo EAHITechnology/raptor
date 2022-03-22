@@ -21,16 +21,8 @@ type mysqlManager struct {
 	dbclient map[string]*mClient
 }
 
-var mManager mysqlManager
-
 type Logger interface {
 	Printf(f string, args ...interface{})
-}
-
-func init() {
-	mManager = mysqlManager{
-		dbclient: make(map[string]*mClient),
-	}
 }
 
 func checkMysqlConfig(m MConfigInfo) error {
@@ -95,7 +87,7 @@ func newMysql(m mInfo, l Logger) (*gorm.DB, error) {
 }
 
 /*
-NewMysql 返回一个 mClient 对象的指针, 我们可以调用 mClient 中的 Master 或者 Slaves 中的任意一个来操作 db 对象.
+NewMysql retuen mClient
 */
 func NewMysql(m MConfigInfo, l Logger) (*mClient, error) {
 	if err := checkMysqlConfig(m); err != nil {
@@ -159,11 +151,6 @@ func (m *mClient) GetMaster() *gorm.DB {
 	return m.Master
 }
 
-/*
-如果是事务请求，需要复用 slave 实例, 否则可能事务不在同一个链接里
-后续 roadmap 会判断 mClient 是否开启了一个事物，如果开启了事物,
-将取同一个链接的幂等操作.
-*/
 func (m *mClient) GetSlave() *gorm.DB {
 	return m.Slave[0]
 }
@@ -189,13 +176,18 @@ func (m *mClient) Close() error {
 	return err
 }
 
-/*
-NewMysqlSingle 方法提供了通过配置文件实例化 mysql 的方法,
-用此方法的话，请使用 packet 中提供的 GetClient 方法操作 mClient 实例
-*/
+// The NewMysqlSingle function provides a way
+// to instantiate mysql through configuration.
+// If using the NewMysqlSingle function, use
+// the GetClient function provided in the package
+// to manipulate the mClient instance.
 func NewMysqlSingle(ms []MConfigInfo, l Logger) error {
 	mManager.lock.Lock()
 	defer mManager.lock.Unlock()
+
+	mManager = &mysqlManager{
+		dbclient: make(map[string]*mClient),
+	}
 
 	for _, m := range ms {
 		mclient, err := NewMysql(m, l)

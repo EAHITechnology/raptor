@@ -47,9 +47,9 @@ func handle(h HandlerFunc) gin.HandlerFunc {
 	}
 }
 
-func InitHttpServer(dc *DnetConfig) (*HttpServer, error) {
-	if utils.IsNil(dc.L) || dc.L == nil {
-		return nil, HTTP_LOG_NIL_ERR
+func InitHttpServer(ec *EnetConfig) (*HttpServer, error) {
+	if utils.IsNil(ec.L) || ec.L == nil {
+		return nil, ErrHttpLogNil
 	}
 
 	gin.SetMode(gin.ReleaseMode)
@@ -61,14 +61,14 @@ func InitHttpServer(dc *DnetConfig) (*HttpServer, error) {
 	hs := &HttpServer{
 		engine:      engine,
 		closeCh:     make(chan struct{}),
-		log:         dc.L,
+		log:         ec.L,
 		routerGroup: make(map[string]*RouterGroup),
 	}
 
 	engine.Use(hs.traceMiddle())
 	engine.Use(hs.loggerMiddle())
 
-	listener, err := net.Listen("tcp", dc.Host)
+	listener, err := net.Listen("tcp", ec.Host)
 	if err != nil {
 		return nil, err
 	}
@@ -92,8 +92,8 @@ func InitHttpServer(dc *DnetConfig) (*HttpServer, error) {
 	return hs, nil
 }
 
-func InitHttpServerSingle(dc *DnetConfig) error {
-	hs, err := InitHttpServer(dc)
+func InitHttpServerSingle(ec *EnetConfig) error {
+	hs, err := InitHttpServer(ec)
 	if err != nil {
 		return err
 	}

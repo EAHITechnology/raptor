@@ -72,7 +72,7 @@ func getHashRing(items []balancerItem) ([]consistencyHashHostInfo, map[string]in
 	return ring, addrMap
 }
 
-func NewConsistencyHashBalancer(conf balancerConfig) (Balancer, error) {
+func NewConsistencyHashBalancer(conf balancerConfig) (*consistencyHashBalancer, error) {
 	if len(conf.balancerConfigs) == 0 {
 		return nil, errors.New("addr nil")
 	}

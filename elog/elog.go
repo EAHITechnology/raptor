@@ -1,7 +1,7 @@
 package elog
 
 import (
-	"context"
+	"golang.org/x/net/context"
 )
 
 type LogLevel int32
@@ -17,7 +17,8 @@ const (
 )
 
 const (
-	FORMAT_JSON LogFormat = "json"
+	FORMAT_JSON   LogFormat = "json"
+	FORMAT_NORMAL LogFormat = "normal"
 )
 
 const (

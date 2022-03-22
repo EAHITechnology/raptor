@@ -1,6 +1,6 @@
 package enet
 
-type DnetConfig struct {
+type EnetConfig struct {
 	L    NetLog
 	Host string
 }

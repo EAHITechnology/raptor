@@ -58,7 +58,7 @@ func getGplist(items []balancerItem) ([]*randomHostInfo, map[string]int) {
 	return gplist, addrMap
 }
 
-func NewRandomBalancer(conf balancerConfig) (Balancer, error) {
+func NewRandomBalancer(conf balancerConfig) (*randomBalancer, error) {
 
 	if len(conf.balancerConfigs) == 0 {
 		return nil, errors.New("addr nil")

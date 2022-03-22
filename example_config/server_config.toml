@@ -15,7 +15,8 @@ http_port="0.0.0.0:1234"
 
 #通过配置中心加载配置文件
 [config_center]
-# file_path,etcd_addr,apollo_addr 三个配置一个即可
-file_path = "./example_config/config.toml"
+# file_path,etcd_addr,apollo_addr choose one from three
+file_type="toml"
+file_path="./example_config/config.toml"
 #etcd_addr = ["xxx.xxx.xxx.xxx:xxx","xxx.xxx.xxx.xxx:xxx","xxx.xxx.xxx.xxx:xxx"]
 #apollo_addr = "xxx.xxx.xxx.xxx:xxx"

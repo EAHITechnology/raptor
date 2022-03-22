@@ -20,3 +20,5 @@ const (
 	CONN_MAX_LiFE_TIME = 300
 	CONN_MAX_IDLE_TIME = 300
 )
+
+var mManager *mysqlManager

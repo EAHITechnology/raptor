@@ -5,18 +5,23 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"net/url"
 	"sync"
 	"time"
 
-	"github.com/EAHITechnology/raptor/erpc/balancer"
+	"github.com/EAHITechnology/raptor/balancer"
 	"github.com/EAHITechnology/raptor/utils"
 	"golang.org/x/net/context"
 )
 
 var HttpManager *HttpClientManager
+
+var (
+	ErrBalancerNil          = errors.New("balancer nil")
+	ErrServiceNotExists     = errors.New("service not exists")
+	ErrServiceAlreadyExists = errors.New("service already exists")
+)
 
 type HttpMethod string
 
@@ -42,6 +47,11 @@ type HttpClientConfig struct {
 	BaseConfig RpcNetConfigInfo
 }
 
+type HttpManagerConfig struct {
+	Httpconf *HttpClientConfig
+	Balancer balancer.Balancer
+}
+
 type HttpClient struct {
 	conf   *HttpClientConfig
 	client *http.Client
@@ -54,24 +64,7 @@ type HttpClientManager struct {
 	lock    sync.RWMutex
 }
 
-func getBalancerTyp(typ string) (balancer.BalancerTyp, error) {
-	var balancetype balancer.BalancerTyp
-	switch typ {
-	case "", "random":
-		balancetype = balancer.RandomType
-	case "p2c":
-		balancetype = balancer.P2cType
-	case "consistency_hash":
-		balancetype = balancer.ConsistencyHashType
-	case "range":
-		balancetype = balancer.RangeType
-	default:
-		return "", errors.New("illegal type")
-	}
-	return balancetype, nil
-}
-
-func NewHttpClient(conf *HttpClientConfig) (*HttpClient, error) {
+func NewHttpClient(conf *HttpClientConfig, b balancer.Balancer) (*HttpClient, error) {
 	h := &HttpClient{}
 
 	if conf.BaseConfig.IdleConnTimeout < DefaultHttpIdleTimeout {
@@ -84,10 +77,7 @@ func NewHttpClient(conf *HttpClientConfig) (*HttpClient, error) {
 	h.client = &http.Client{
 		Timeout: time.Millisecond * time.Duration(conf.BaseConfig.TimeOut),
 		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout: time.Millisecond * time.Duration(conf.BaseConfig.DialTimeout),
-			}).DialContext,
+			Proxy:               http.ProxyFromEnvironment,
 			MaxIdleConns:        conf.BaseConfig.MaxIdleConns,
 			MaxConnsPerHost:     conf.BaseConfig.MaxConnsPerAddr,
 			MaxIdleConnsPerHost: conf.BaseConfig.MaxIdleConnsPerAddr,
@@ -98,25 +88,7 @@ func NewHttpClient(conf *HttpClientConfig) (*HttpClient, error) {
 		},
 	}
 
-	// balancer
-	balancetype, err := getBalancerTyp(conf.BaseConfig.Balancetype)
-	if err != nil {
-		return nil, err
-	}
-
-	balancerConfig := balancer.NewBalancerConfig()
-	balancerConfig.SetBalancerTyp(balancetype)
-	for idx, addr := range conf.BaseConfig.Addr {
-		balancerConfig.SetItem(balancer.NewBalancerItem(addr, conf.BaseConfig.Wight[idx]))
-	}
-
-	balancer, err := balancer.NewBalancer((*balancerConfig))
-	if err != nil {
-		return nil, err
-	}
-
-	h.client.CloseIdleConnections()
-	h.b = balancer
+	h.b = b
 	return h, nil
 }
 
@@ -161,6 +133,28 @@ func (h *HttpClient) Send(ctx context.Context, method HttpMethod, key []byte, ur
 	return respB, nil
 }
 
+func (h *HttpClient) AddAddr(addr string, wight int) error {
+	h.lock.Lock()
+	defer h.lock.Unlock()
+
+	item := balancer.NewBalancerItem(addr, wight)
+	if err := h.b.Add(item); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (h *HttpClient) RemoveAddr(addr string) error {
+	h.lock.Lock()
+	defer h.lock.Unlock()
+
+	if err := h.b.Remove(addr); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (h *HttpClient) Close() {
 	h.lock.Lock()
 	defer h.lock.Unlock()
@@ -174,15 +168,15 @@ func NewHttpClientManager() *HttpClientManager {
 	}
 }
 
-func (hm *HttpClientManager) NewHttpClient(conf *HttpClientConfig) error {
+func (hm *HttpClientManager) NewHttpClient(conf *HttpClientConfig, b balancer.Balancer) error {
 	hm.lock.Lock()
 	defer hm.lock.Unlock()
 
 	if _, ok := hm.manager[conf.BaseConfig.ServiceName]; ok {
-		return errors.New("service already exists")
+		return ErrServiceAlreadyExists
 	}
 
-	client, err := NewHttpClient(conf)
+	client, err := NewHttpClient(conf, b)
 	if err != nil {
 		return err
 	}
@@ -198,16 +192,19 @@ func (hm *HttpClientManager) GetClient(serviceName string) (*HttpClient, error) 
 
 	client, ok := hm.manager[serviceName]
 	if !ok {
-		return nil, errors.New("service not exists")
+		return nil, ErrServiceNotExists
 	}
 
 	return client, nil
 }
 
-func NewSingleHttpClientManager(conf []*HttpClientConfig) error {
+func NewSingleHttpClientManager(conf []HttpManagerConfig) error {
 	manager := NewHttpClientManager()
 	for _, val := range conf {
-		if err := manager.NewHttpClient(val); err != nil {
+		if val.Balancer == nil {
+			return ErrBalancerNil
+		}
+		if err := manager.NewHttpClient(val.Httpconf, val.Balancer); err != nil {
 			return err
 		}
 	}

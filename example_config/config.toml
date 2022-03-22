@@ -2,6 +2,12 @@
 test1 = "test1"
 
 #以下是组件配置区
+[service_discovery]
+# etcd_addr,zk_addr,custom_service_discovery choose one of three or none at all
+#etcd_addr=["xxx.xxx.xxx.xxx:xxx","xxx.xxx.xxx.xxx:xxx","xxx.xxx.xxx.xxx:xxx"]
+#zk_addr=["xxx.xxx.xxx.xxx:xxx","xxx.xxx.xxx.xxx:xxx","xxx.xxx.xxx.xxx:xxx"]
+#custom_service_discovery=["xxx.xxx.xxx.xxx:xxx","xxx.xxx.xxx.xxx:xxx","xxx.xxx.xxx.xxx:xxx"]
+
 [[database]]
 name="raptor-mysql"
 database=""
@@ -33,3 +39,20 @@ slow_time=500
 connect_time=500
 wait=true
 databases=0
+
+[[rpc_server_client]]
+service_name="test_raptor"
+proto="http"
+endpoints_from="file"
+addr=["www.baidu.com"]
+wight=[1]
+balancetype="random"
+dial_timeout=1000
+timeout=100
+retry_times=0
+max_conns_per_addr=10
+max_idleconns_per_addr=5
+max_idleconns=25
+idleconn_timeout=5000
+readbuffer_size=4194304
+writebuffer_size=4194304

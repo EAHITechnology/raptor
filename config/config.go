@@ -2,20 +2,11 @@ package config
 
 import (
 	"errors"
-
-	"golang.org/x/net/context"
 )
 
-type ConfigParser interface {
-	// 读取启动用元数据
-	Read(path string) error
-
-	// 加载业务配置
-	InitConfig(ctx context.Context) error
-
-	// Unmarshal 需要在调用 Read 获取完元数据之后再进行调用
-	Unmarshal(obj interface{}) error
-}
+var (
+	ErrConfigParserTyp = errors.New("config parser error")
+)
 
 const (
 	TomlConfigParserType = "toml"
@@ -23,17 +14,35 @@ const (
 	YmlConfigParserType  = "yml"
 )
 
-var (
-	ErrConfigParserType = errors.New("config parser error")
-)
+type ConfigParser interface {
+	Get(key string) interface{}
 
-func NewConfigParser(typ string) (ConfigParser, error) {
-	switch typ {
-	case TomlConfigParserType:
-		return NewTomlConfigManager(), nil
-	case YamlConfigParserType, YmlConfigParserType:
-		return nil, ErrConfigParserType
-	default:
-		return nil, ErrConfigParserType
+	GetServiceDiscoveryConfig() (ServiceDiscovery, bool)
+	GetDataBaseConfig(key string) (DatabaseConfigInfo, bool)
+	GetRedisConfig(key string) (RedisConfigInfo, bool)
+	GetRpcConfig(key string) (RpcNetConfigInfo, bool)
+
+	GetDataBaseConfigs() []DatabaseConfigInfo
+	GetRedisConfigs() []RedisConfigInfo
+	GetRpcConfigs() []RpcNetConfigInfo
+
+	Unmarshal(obj interface{}) error
+
+	Reload() error
+}
+
+func NewConfigParser(configCenter ConfigCenterInfo) (ConfigParser, error) {
+	if configCenter.FilePath != "" {
+		return NewFileConfigParser(configCenter)
 	}
+
+	if len(configCenter.ApolloAddr) != 0 {
+		return NewApolloConfigParser(configCenter)
+	}
+
+	if len(configCenter.EtcdAddrs) != 0 {
+		return NewEtcdConfigParser(configCenter)
+	}
+
+	return nil, ErrConfigParserTyp
 }
