@@ -357,7 +357,7 @@ func (d *DefaultServer) BeforeInit(serverFunc ...ServerFunc) {
 func (d *DefaultServer) execAfter(ctx context.Context) {
 	if atomic.CompareAndSwapInt32(&d.afterInitFunc.flag, defaultWriting, defaultEndWrite) {
 		for _, serverFunc := range d.afterInitFunc.serverFuncList {
-			go serverFunc(ctx)
+			go serverFunc(ctx, d.configParser)
 		}
 	}
 }
@@ -365,7 +365,7 @@ func (d *DefaultServer) execAfter(ctx context.Context) {
 func (d *DefaultServer) execBefore(ctx context.Context) {
 	if atomic.CompareAndSwapInt32(&d.beforeInitFunc.flag, defaultWriting, defaultEndWrite) {
 		for _, serverFunc := range d.beforeInitFunc.serverFuncList {
-			go serverFunc(ctx)
+			go serverFunc(ctx, d.configParser)
 		}
 	}
 }
@@ -421,4 +421,8 @@ func (d *DefaultServer) Run(ctx context.Context, cancel context.CancelFunc) erro
 			elog.Elog.Warnf("ignore os signal: %s", sig.String())
 		}
 	}
+}
+
+func (d *DefaultServer) GetConfig() config.ConfigParser {
+	return d.configParser
 }

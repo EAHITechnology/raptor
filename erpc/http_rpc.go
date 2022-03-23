@@ -101,7 +101,15 @@ func (h *HttpClient) Send(ctx context.Context, method HttpMethod, key []byte, ur
 		return nil, err
 	}
 
-	url, err := utils.Write(hostInfo.GetAddr(), uri, "?", query.Encode())
+	var q string = ""
+	if query.Encode() != "" {
+		q, err = utils.Write("?", query.Encode())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	url, err := utils.Write(h.conf.BaseConfig.Proto, "://", hostInfo.GetAddr(), uri, q)
 	if err != nil {
 		return nil, err
 	}

@@ -2,6 +2,7 @@ package emysql
 
 import (
 	"errors"
+	"sync"
 )
 
 var (
@@ -22,3 +23,4 @@ const (
 )
 
 var mManager *mysqlManager
+var once sync.Once

@@ -182,12 +182,12 @@ func (m *mClient) Close() error {
 // the GetClient function provided in the package
 // to manipulate the mClient instance.
 func NewMysqlSingle(ms []MConfigInfo, l Logger) error {
+	once.Do(func() {
+		mManager = &mysqlManager{}
+		mManager.dbclient = make(map[string]*mClient)
+	})
 	mManager.lock.Lock()
 	defer mManager.lock.Unlock()
-
-	mManager = &mysqlManager{
-		dbclient: make(map[string]*mClient),
-	}
 
 	for _, m := range ms {
 		mclient, err := NewMysql(m, l)

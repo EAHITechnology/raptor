@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/EAHITechnology/raptor/balancer"
+	"github.com/EAHITechnology/raptor/config"
 	"golang.org/x/net/context"
 )
 
@@ -20,7 +21,7 @@ const (
 	defaultEndWrite    int32 = 2
 )
 
-type ServerFunc func(ctx context.Context)
+type ServerFunc func(ctx context.Context, config config.ConfigParser)
 
 type atferFuncObj struct {
 	serverFuncList []ServerFunc
@@ -49,6 +50,8 @@ type Server interface {
 	// The function will block until an error is
 	// reported in the process.
 	Run(ctx context.Context, cancel context.CancelFunc) error
+
+	GetConfig() config.ConfigParser
 }
 
 func NewServer(ctx context.Context, typ ServerTyp, configPath string) (Server, error) {

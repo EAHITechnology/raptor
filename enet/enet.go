@@ -151,41 +151,53 @@ func (h *HttpServer) NewGroup(path string) *RouterGroup {
 // ------------------- routerGroup -------------------
 
 func (r *RouterGroup) Post(relativePath string, handlers ...HandlerFunc) {
+	handlerFunces := []gin.HandlerFunc{}
 	for _, handler := range handlers {
-		r.routerGroup.POST(relativePath, handle(handler))
+		handlerFunces = append(handlerFunces, handle(handler))
 	}
+	r.routerGroup.POST(relativePath, handlerFunces...)
 }
 
 func (r *RouterGroup) Get(relativePath string, handlers ...HandlerFunc) {
+	handlerFunces := []gin.HandlerFunc{}
 	for _, handler := range handlers {
-		r.routerGroup.GET(relativePath, handle(handler))
+		handlerFunces = append(handlerFunces, handle(handler))
 	}
+	r.routerGroup.GET(relativePath, handlerFunces...)
 }
 
 func (r *RouterGroup) Any(relativePath string, handlers ...HandlerFunc) {
+	handlerFunces := []gin.HandlerFunc{}
 	for _, handler := range handlers {
-		r.routerGroup.Any(relativePath, handle(handler))
+		handlerFunces = append(handlerFunces, handle(handler))
 	}
+	r.routerGroup.Any(relativePath, handlerFunces...)
 }
 
 // ------------------- routerGroup end-------------------
 
 func (h *HttpServer) Post(path string, handlers ...HandlerFunc) {
+	handlerFunces := []gin.HandlerFunc{}
 	for _, handler := range handlers {
-		h.engine.POST(path, handle(handler))
+		handlerFunces = append(handlerFunces, handle(handler))
 	}
+	h.engine.POST(path, handlerFunces...)
 }
 
 func (h *HttpServer) Get(path string, handlers ...HandlerFunc) {
+	handlerFunces := []gin.HandlerFunc{}
 	for _, handler := range handlers {
-		h.engine.GET(path, handle(handler))
+		handlerFunces = append(handlerFunces, handle(handler))
 	}
+	h.engine.GET(path, handlerFunces...)
 }
 
 func (h *HttpServer) Any(path string, handlers ...HandlerFunc) {
+	handlerFunces := []gin.HandlerFunc{}
 	for _, handler := range handlers {
-		h.engine.Any(path, handle(handler))
+		handlerFunces = append(handlerFunces, handle(handler))
 	}
+	h.engine.Any(path, handlerFunces...)
 }
 
 func CreateJsonResp(code int, msg string) CommonJsonResp {

@@ -35,6 +35,10 @@ func NewFileConfigParser(configCenter ConfigCenterInfo) (ConfigParser, error) {
 }
 
 func (f *FileConfigParser) loadConfig() error {
+	if f.configCenter.FileType == "" {
+		return ErrFileTypeNil
+	}
+
 	fileB, err := ioutil.ReadFile(f.configCenter.FilePath)
 	if err != nil {
 		return err
