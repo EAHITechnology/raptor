@@ -76,7 +76,7 @@ func InsertDemoTask(d DemoModel) (int64, error) {
 No need to worry about initialization anymore.
 
 ## organizational structure
-The organizational form of raptor is very simple, and functions are divided according to the package dimension, following the principle of single responsibility.You can find their interface initialization functions under each package
+The organizational form of raptor is very simple, and functions are divided according to the package dimension, following the principle of single responsibility.Like a group of raptors, they are short and powerful and work together. You can find their interface initialization functions under each package
 
 ```
 .
