@@ -9,6 +9,7 @@ replace google.golang.org/grpc v1.45.0 => google.golang.org/grpc v1.26.0
 require (
 	github.com/Shopify/sarama v1.32.0
 	github.com/bsm/sarama-cluster v2.1.15+incompatible
+	github.com/coreos/etcd v3.3.27+incompatible
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gomodule/redigo v1.8.8
@@ -27,7 +28,6 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/coreos/bbolt v1.3.6 // indirect
-	github.com/coreos/etcd v3.3.27+incompatible // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
