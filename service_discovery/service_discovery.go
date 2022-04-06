@@ -15,7 +15,8 @@ const (
 )
 
 var (
-	ErrLogNil = errors.New("")
+	ErrLogNil               = errors.New("service discovery log nil")
+	ErrServiceAlreadyExists = errors.New("service already exists")
 )
 
 type ItermInfo struct {

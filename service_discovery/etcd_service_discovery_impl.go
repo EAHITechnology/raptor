@@ -2,7 +2,6 @@ package service_discovery
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"time"
 
@@ -10,8 +9,6 @@ import (
 
 	"go.etcd.io/etcd/clientv3"
 )
-
-var ErrServiceAlreadyExists = errors.New("service already exists")
 
 type EtcdServiceDiscovery struct {
 	config clientv3.Config
