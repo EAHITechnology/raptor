@@ -1,13 +1,12 @@
 package service_discovery
 
 import (
-	"context"
 	"sync"
 	"time"
 
 	"github.com/coreos/etcd/mvcc/mvccpb"
-
 	"go.etcd.io/etcd/clientv3"
+	"golang.org/x/net/context"
 )
 
 type EtcdServiceDiscovery struct {

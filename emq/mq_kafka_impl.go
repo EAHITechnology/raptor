@@ -1,12 +1,12 @@
 package emq
 
 import (
-	"context"
 	"sync"
 	"time"
 
 	"github.com/Shopify/sarama"
 	cluster "github.com/bsm/sarama-cluster"
+	"golang.org/x/net/context"
 )
 
 const (
@@ -119,7 +119,7 @@ func GetClusterConfig(config *KafkaConfig) *cluster.Config {
 
 func NewKafkaClient(ctx context.Context, config *KafkaConfig) (KafkaClient, error) {
 	if config.L == nil {
-		return KafkaClient{}, KafkaLoggerNilErr
+		return KafkaClient{}, ErrKafkaLoggerNil
 	}
 	sconfig := GetSaramConfig(config)
 	cconfig := GetClusterConfig(config)

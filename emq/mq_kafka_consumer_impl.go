@@ -1,11 +1,11 @@
 package emq
 
 import (
-	"context"
 	"encoding/json"
 
 	"github.com/Shopify/sarama"
 	cluster "github.com/bsm/sarama-cluster"
+	"golang.org/x/net/context"
 )
 
 type KafkaConsumer struct {
@@ -46,7 +46,7 @@ func (c *KafkaConsumer) ReadMsg(ctx context.Context, value interface{}) (context
 		return nil, nil
 	case cm, ok := <-c.consumer.Messages():
 		if !ok {
-			return nil, ConsumerClosedErr
+			return nil, ErrConsumerClosed
 		}
 		if err := json.Unmarshal(cm.Value, value); err != nil {
 			return ctx, err
@@ -67,7 +67,7 @@ func (c *KafkaConsumer) FetchMsg(ctx context.Context, value interface{}) (contex
 		return nil, nil, nil
 	case cm, ok := <-c.consumer.Messages():
 		if !ok {
-			return nil, nil, ConsumerClosedErr
+			return nil, nil, ErrConsumerClosed
 		}
 		if err := json.Unmarshal(cm.Value, value); err != nil {
 			return ctx, nil, err
@@ -92,7 +92,7 @@ func (c *KafkaConsumer) ReadPayloadMsg(ctx context.Context) (context.Context, []
 		return nil, nil, nil
 	case cm, ok := <-c.consumer.Messages():
 		if !ok {
-			return nil, nil, ConsumerClosedErr
+			return nil, nil, ErrConsumerClosed
 		}
 
 		// ctx
@@ -110,7 +110,7 @@ func (c *KafkaConsumer) FetchPayloadMsg(ctx context.Context) (context.Context, [
 		return nil, nil, nil, nil
 	case cm, ok := <-c.consumer.Messages():
 		if !ok {
-			return nil, nil, nil, ConsumerClosedErr
+			return nil, nil, nil, ErrConsumerClosed
 		}
 
 		message := &KafkaMssage{

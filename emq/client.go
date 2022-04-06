@@ -1,7 +1,7 @@
 package emq
 
 import (
-	"context"
+	"golang.org/x/net/context"
 )
 
 type MqConfig interface {
@@ -68,7 +68,7 @@ func NewClient(ctx context.Context, m MqConfig) (Client, error) {
 	case KAFKA_MQ_TYP:
 		kconfig, ok := m.(*KafkaConfig)
 		if !ok {
-			return nil, KafkaConfigIllegalErr
+			return nil, ErrKafkaConfigIllegal
 		}
 		client, err := NewKafkaClient(ctx, kconfig)
 		if err != nil {
@@ -76,6 +76,6 @@ func NewClient(ctx context.Context, m MqConfig) (Client, error) {
 		}
 		return &client, nil
 	default:
-		return nil, IllegalMqTypeErr
+		return nil, ErrIllegalMqType
 	}
 }

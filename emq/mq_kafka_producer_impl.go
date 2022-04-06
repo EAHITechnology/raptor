@@ -1,11 +1,11 @@
 package emq
 
 import (
-	"context"
 	"strconv"
 	"sync"
 
 	"github.com/Shopify/sarama"
+	"golang.org/x/net/context"
 )
 
 type KafkaProducer struct {
