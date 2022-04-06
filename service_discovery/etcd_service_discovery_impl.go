@@ -26,9 +26,10 @@ type EtcdServiceDiscovery struct {
 
 	serviceDiscoveryConfig ServiceDiscoveryConfig
 	lock                   sync.RWMutex
+	log                    ServiceDiscoveryLog
 }
 
-func NewEtcdServiceDiscovery(ctx context.Context, serviceDiscoveryConfig ServiceDiscoveryConfig) (*EtcdServiceDiscovery, error) {
+func NewEtcdServiceDiscovery(ctx context.Context, serviceDiscoveryConfig ServiceDiscoveryConfig, log ServiceDiscoveryLog) (*EtcdServiceDiscovery, error) {
 	etcdConfig := clientv3.Config{
 		Endpoints:   serviceDiscoveryConfig.EtcdAddr,
 		DialTimeout: 5 * time.Second,
@@ -60,6 +61,7 @@ func NewEtcdServiceDiscovery(ctx context.Context, serviceDiscoveryConfig Service
 		leaseId:                leaseId,
 		cancel:                 cancel,
 		serviceDiscoveryConfig: serviceDiscoveryConfig,
+		log:                    log,
 	}
 
 	return etcdServiceDiscovery, nil
@@ -112,16 +114,29 @@ func (e *EtcdServiceDiscovery) watchService(ctx context.Context, service string)
 		}
 
 		for _, kv := range resp.Kvs {
-			itermInfoChan <- ItermInfo{
-				key:  kv.Key,
-				info: kv.Value,
-				oper: Add,
+			select {
+			case <-ctx.Done():
+				close(itermInfoChan)
+				return
+			default:
+				itermInfoChan <- ItermInfo{
+					key:  kv.Key,
+					info: kv.Value,
+					oper: Add,
+				}
 			}
 		}
 
 		for {
 			rch := e.client.Watch(ctx, service+"/", clientv3.WithPrefix())
 			for wresp := range rch {
+				if err := wresp.Err(); err != nil {
+					e.log.Errorf("watchService Watch key:%s Error:%s", service+"/", err.Error())
+					// TODO backoff
+					time.Sleep(time.Second * 1)
+					break
+				}
+
 				for _, ev := range wresp.Events {
 					select {
 					case <-ctx.Done():
