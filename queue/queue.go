@@ -5,8 +5,8 @@ import (
 )
 
 type Queue interface {
-	Put(v interface{})
-	Pop() interface{}
+	Put(v interface{}) error
+	Pop() (interface{}, error)
 	Len() int64
 	Cap() int64
 }

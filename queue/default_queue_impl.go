@@ -1,8 +1,19 @@
 package queue
 
 import (
+	"errors"
 	"sync/atomic"
 	"unsafe"
+)
+
+const (
+	DefaultReTryTimes = 3
+)
+
+var (
+	ErrPutFail = errors.New("put fail")
+	ErrPopNil  = errors.New("pop nil")
+	ErrPopFail = errors.New("pop fail")
 )
 
 type Defaultqueue struct {
@@ -31,9 +42,11 @@ func NewDefaultqueue() *Defaultqueue {
 }
 
 // Rpush puts the given value v at the tail of the queue.
-func (d *Defaultqueue) Put(v interface{}) {
+func (d *Defaultqueue) Put(v interface{}) error {
 	n := &node{value: v}
-	for {
+	retryTimes := DefaultReTryTimes
+	for retryTimes > 0 {
+		retryTimes--
 		tail := load(&d.tail)
 		next := load(&tail.next)
 		if tail == load(&d.tail) {
@@ -41,26 +54,29 @@ func (d *Defaultqueue) Put(v interface{}) {
 				if cas(&tail.next, next, n) {
 					cas(&d.tail, tail, n)
 					d.lenth++
-					return
+					return nil
 				}
 			} else {
 				cas(&d.tail, tail, next)
 			}
 		}
 	}
+	return ErrPutFail
 }
 
 // Lpop removes and returns the value at the head of the queue.
 // It returns nil if the queue is empty.
-func (d *Defaultqueue) Pop() interface{} {
-	for {
+func (d *Defaultqueue) Pop() (interface{}, error) {
+	retryTimes := DefaultReTryTimes
+	for retryTimes > 0 {
+		retryTimes--
 		head := load(&d.head)
 		tail := load(&d.tail)
 		next := load(&head.next)
 		if head == load(&d.head) {
 			if head == tail {
 				if next == nil {
-					return nil
+					return nil, ErrPopNil
 				}
 				cas(&d.tail, tail, next)
 			} else {
@@ -68,11 +84,12 @@ func (d *Defaultqueue) Pop() interface{} {
 				if cas(&d.head, head, next) {
 					cas(&head.next, next, nil)
 					d.lenth--
-					return v
+					return v, nil
 				}
 			}
 		}
 	}
+	return nil, ErrPopFail
 }
 
 func (d *Defaultqueue) Len() int64 {
