@@ -86,7 +86,7 @@ func (r *randomBalancer) Pick(key []byte) (HostInfo, error) {
 		return r.geometricProbabilityList[0], nil
 	}
 
-	return r.geometricProbabilityList[rand.Int()%len(r.geometricProbabilityList)], nil
+	return r.geometricProbabilityList[r.rand.Int()%len(r.geometricProbabilityList)], nil
 }
 
 func (r *randomBalancer) Add(conf ...balancerItem) error {
