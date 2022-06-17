@@ -216,8 +216,10 @@ func CreateSuccessJsonResp() CommonJsonResp {
 
 func (h *HttpServer) Run() {
 	defer func() {
-		if err := h.listener.Close(); err != nil {
-			h.log.Errorf("listener close err:%v", err)
+		if h.listener != nil {
+			if err := h.listener.Close(); err != nil {
+				h.log.Errorf("listener close err:%v", err)
+			}
 		}
 	}()
 
@@ -231,8 +233,10 @@ func (h *HttpServer) Run() {
 	select {
 	case <-h.closeCh:
 		h.log.Infof("closing http api server")
+		return
 	case err := <-errCh:
 		h.log.Errorf("http api server exit on error:%v", err)
+		return
 	}
 
 }
