@@ -85,6 +85,8 @@ func (d *DoubleBuffer) runReload(ctx context.Context) {
 			}
 			d.buf[(atomic.LoadInt32(&d.flag)+1)%2] = newBuf
 			atomic.AddInt32(&d.flag, 1)
+		case <-d.closeChan:
+			return
 		}
 	}
 }

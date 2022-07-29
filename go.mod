@@ -4,7 +4,7 @@ go 1.17
 
 replace github.com/coreos/bbolt v1.3.6 => go.etcd.io/bbolt v1.3.6
 
-replace google.golang.org/grpc v1.45.0 => google.golang.org/grpc v1.26.0
+replace google.golang.org/grpc v1.45.0 => google.golang.org/grpc v1.43.0
 
 require (
 	github.com/Shopify/sarama v1.32.0

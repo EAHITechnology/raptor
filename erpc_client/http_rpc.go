@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/EAHITechnology/raptor/balancer"
+	"github.com/EAHITechnology/raptor/erpc_balancer/http_balancer"
 	"github.com/EAHITechnology/raptor/utils"
 	"golang.org/x/net/context"
 )
@@ -93,9 +93,6 @@ func NewHttpClient(conf *HttpClientConfig, b balancer.Balancer) (*HttpClient, er
 }
 
 func (h *HttpClient) Send(ctx context.Context, method HttpMethod, key []byte, uri string, query url.Values, header map[string]string, body io.Reader) ([]byte, error) {
-	h.lock.RLock()
-	defer h.lock.RUnlock()
-
 	hostInfo, err := h.b.Pick(key)
 	if err != nil {
 		return nil, err
